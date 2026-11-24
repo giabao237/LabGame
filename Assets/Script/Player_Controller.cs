@@ -342,11 +342,19 @@ public class Player_Controller : MonoBehaviour
             else if (attackNumber == 2 && hasAttack2) animator.SetTrigger(Attack2Hash);
             else if (attackNumber == 3 && hasAttack3) animator.SetTrigger(Attack3Hash);
 
-            string stateName = $"Animation_Attack{attackNumber}_Player";
-            if (animator.HasState(0, Animator.StringToHash(stateName)))
-            {
-                animator.Play(stateName, 0, 0f);
-            }
+            // Tự động tìm và chơi State tấn công cho bất kỳ nhân vật nào:
+            // Ghost (Animation_Attack1_Ghost), Shinobi (Animation_Attack1_Player), Vampire, etc.
+            string charSuffix = gameObject.name.Replace("Player_", "").Replace("(Clone)", "").Trim();
+            PlayAnimationState(
+                $"Animation_Attack{attackNumber}_{charSuffix}",
+                $"Animation_Attack{attackNumber}_Ghost",
+                $"Animation_Attack{attackNumber}_Player",
+                $"Animation_Attack{attackNumber}_Shinobi",
+                $"Animation_Attack{attackNumber}_Vampire",
+                $"Animation_Attack{attackNumber}",
+                $"Attack_{attackNumber}",
+                $"Attack{attackNumber}"
+            );
         }
 
         // 2. Quét trúng Enemy để gây Hurt cho quái
@@ -460,10 +468,16 @@ public class Player_Controller : MonoBehaviour
                 animator.SetBool(IsShieldHash, true);
             }
 
-            if (animator.HasState(0, Animator.StringToHash("Animation_Shield_Player")))
-            {
-                animator.Play("Animation_Shield_Player", 0, 0f);
-            }
+            string charSuffix = gameObject.name.Replace("Player_", "").Replace("(Clone)", "").Trim();
+            PlayAnimationState(
+                $"Animation_Shield_{charSuffix}",
+                "Animation_Shield_Ghost",
+                "Animation_Shield_Player",
+                "Animation_Shield_Shinobi",
+                "Animation_Shield_Vampire",
+                "Animation_Shield",
+                "Shield"
+            );
         }
     }
 
@@ -695,11 +709,17 @@ public class Player_Controller : MonoBehaviour
             animator.SetBool(IsAttackHash, false);
             if (hasIsShield) animator.SetBool(IsShieldHash, false);
 
-            // Chơi trực tiếp animation state Animation_Die_Player
-            if (animator.HasState(0, Animator.StringToHash("Animation_Die_Player")))
-            {
-                animator.Play("Animation_Die_Player", 0, 0f);
-            }
+            // Chơi trực tiếp animation state Die cho bất kỳ nhân vật nào
+            string charSuffix = gameObject.name.Replace("Player_", "").Replace("(Clone)", "").Trim();
+            PlayAnimationState(
+                $"Animation_Die_{charSuffix}",
+                "Animation_Die_Ghost",
+                "Animation_Die_Player",
+                "Animation_Die_Shinobi",
+                "Animation_Die_Vampire",
+                "Animation_Die",
+                "Die"
+            );
         }
 
         // Tắt nhận lệnh điều khiển
@@ -1323,5 +1343,25 @@ public class Player_Controller : MonoBehaviour
         AudioClip clip = AudioClip.Create("Player_Hurt", sampleCount, 1, sampleRate, false);
         clip.SetData(samples, 0);
         return clip;
+    }
+
+    /// <summary>
+    /// Thử chơi animation state theo danh sách tên dự phòng, tương thích đa nhân vật (Shinobi, Ghost, Vampire...)
+    /// </summary>
+    private bool PlayAnimationState(params string[] stateNames)
+    {
+        if (animator == null) return false;
+
+        foreach (var name in stateNames)
+        {
+            if (string.IsNullOrEmpty(name)) continue;
+            int hash = Animator.StringToHash(name);
+            if (animator.HasState(0, hash))
+            {
+                animator.Play(hash, 0, 0f);
+                return true;
+            }
+        }
+        return false;
     }
 }

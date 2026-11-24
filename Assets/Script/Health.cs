@@ -243,14 +243,25 @@ public class Health : MonoBehaviour
                 if (p.name == "IsDead") anim.SetBool("IsDead", true);
             }
 
-            // Chơi trực tiếp animation state để đảm bảo hoạt cảnh chạy 100%
-            if (anim.HasState(0, Animator.StringToHash("Animation_Die_Player")))
+            // Chơi trực tiếp animation state để đảm bảo hoạt cảnh chạy 100% (tương thích Player_Shinobi, Player_Ghost, Vampire, Enemy)
+            string[] possibleDieStates = new string[]
             {
-                anim.Play("Animation_Die_Player", 0, 0f);
-            }
-            else if (anim.HasState(0, Animator.StringToHash("Animation_Die_Enemy")))
+                "Animation_Die_Ghost",
+                "Animation_Die_Player",
+                "Animation_Die_Shinobi",
+                "Animation_Die_Vampire",
+                "Animation_Die_Enemy",
+                "Animation_Die",
+                "Die"
+            };
+            foreach (var st in possibleDieStates)
             {
-                anim.Play("Animation_Die_Enemy", 0, 0f);
+                int h = Animator.StringToHash(st);
+                if (anim.HasState(0, h))
+                {
+                    anim.Play(h, 0, 0f);
+                    break;
+                }
             }
 
             // Tự động đo độ dài chính xác của clip Animation_Die để biến mất đúng lúc
@@ -258,7 +269,7 @@ public class Health : MonoBehaviour
             {
                 foreach (var clip in anim.runtimeAnimatorController.animationClips)
                 {
-                    if (clip.name == "Animation_Die_Player" || clip.name == "Animation_Die_Enemy")
+                    if (clip.name.Contains("Die") || clip.name.Contains("Dead"))
                     {
                         deathDelay = clip.length;
                         break;
